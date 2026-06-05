@@ -33,6 +33,15 @@ export const knownUkraineLocations: KnownLocation[] = [
     aliases: ["войнилів", "voinyliv", "voynyliv"],
   },
   {
+    label: "Добрівляни",
+    citySlug: "добрівляни",
+    region: "Івано-Франківська область",
+    district: "Калуський район",
+    latitude: 49.0684,
+    longitude: 24.3576,
+    aliases: ["добрівляни", "добровляни", "стави в добрівлянах", "стави в добровлянах", "dobrivliany", "dobrovlyany"],
+  },
+  {
     label: "Долина",
     citySlug: "долина",
     region: "Івано-Франківська область",

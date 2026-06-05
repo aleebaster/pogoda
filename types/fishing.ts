@@ -32,7 +32,11 @@ export type FishingSpot = {
   region: string;
   species: FishName[];
   difficulty: "легко" | "середньо" | "складно";
+  rating: number;
+  paid: boolean;
   accessibility: string;
+  seasonality: string;
+  bestTime: string;
   notes: string;
 };
 

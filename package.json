@@ -16,6 +16,8 @@
     "proof:fishing": "tsx scripts/proof-fishing.ts",
     "proof:ai": "tsx scripts/proof-ai.ts",
     "proof:geolocation": "tsx scripts/proof-geolocation.ts",
+    "proof:dobrivliany": "tsx scripts/proof-dobrivliany.ts",
+    "proof:menu": "tsx scripts/proof-menu.ts",
     "proof:telegram": "tsx scripts/proof-telegram.ts"
   },
   "dependencies": {

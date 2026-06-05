@@ -6,9 +6,10 @@ import { buildBiteForecast } from "@/services/fishing/engine";
 import { resolveDistrictLocation, resolveLocation, resolveManualLocation } from "@/services/location/location";
 import { startNotifications } from "@/services/notifications/scheduler";
 import { backMenu, mainMenu, mainMenuText } from "@/services/telegram/menu";
-import { formatBite, formatFishActivity, formatSpots, formatWeather } from "@/services/telegram/formatters";
+import { formatBite, formatFishActivity, formatLocationOverview, formatMorningForecast, formatNightFishing, formatSpots, formatWeather } from "@/services/telegram/formatters";
 import { getWeatherForecast } from "@/services/weather/sinoptik";
 import { recommendSpots } from "@/services/waterSearch/waterSearch";
+import { spotsRouteKeyboard } from "@/services/waterSearch/routes";
 
 if (!appConfig.telegramToken) {
   throw new Error("TELEGRAM_BOT_TOKEN is required");
@@ -38,7 +39,8 @@ bot.on("message", async (message) => {
   saveFavorite(chatId, location);
   const weather = await getWeatherForecast(location);
   const forecast = buildBiteForecast(weather);
-  await bot.sendMessage(chatId, `📍 Локацію змінено: <b>${location.label}</b>\nДжерело погоди: ${weather.source === "sinoptik" ? "Sinoptik" : weather.source === "open-meteo" ? "Open-Meteo GPS" : "аварійний fallback"}\n\n${formatBite(weather, forecast)}`, { parse_mode: "HTML", reply_markup: mainMenu });
+  const spots = recommendSpots(location, forecast);
+  await bot.sendMessage(chatId, formatLocationOverview(weather, forecast, spots), { parse_mode: "HTML", reply_markup: spotsRouteKeyboard(spots, location) });
 });
 
 bot.on("callback_query", async (query) => {
@@ -74,11 +76,16 @@ bot.on("callback_query", async (query) => {
 
   const weather = await getWeatherForecast(location);
   const forecast = buildBiteForecast(weather);
+  const spots = recommendSpots(location, forecast);
 
   if (data === "bite") await bot.sendMessage(chatId, formatBite(weather, forecast), { parse_mode: "HTML", reply_markup: backMenu });
   if (data === "weather") await bot.sendMessage(chatId, formatWeather(weather), { parse_mode: "HTML", reply_markup: backMenu });
-  if (data === "spots") await bot.sendMessage(chatId, formatSpots(recommendSpots(location, forecast)), { parse_mode: "HTML", reply_markup: backMenu });
+  if (data === "spots" || data === "top_spots" || data === "hot") await bot.sendMessage(chatId, formatSpots(spots), { parse_mode: "HTML", reply_markup: spotsRouteKeyboard(spots, location) });
+  if (data === "routes") await bot.sendMessage(chatId, "🗺 <b>Маршрути до рибних місць</b>\n\nОбери водойму нижче, відкриється Google Maps маршрут.", { parse_mode: "HTML", reply_markup: spotsRouteKeyboard(spots, location) });
   if (data === "fish") await bot.sendMessage(chatId, formatFishActivity(forecast), { parse_mode: "HTML", reply_markup: backMenu });
+  if (data === "bite_index") await bot.sendMessage(chatId, `📊 <b>Індекс кльову</b>\n━━━━━━━━━━━━━━\n${forecast.emoji} ${forecast.score}% - ${forecast.label}\n${forecast.shouldGo ? "✅ Варто їхати" : "🔴 Краще зачекати"}\n\nТоп риба: ${forecast.fish.slice(0, 4).map((fish) => `${fish.fish} ${fish.score}%`).join(" • ")}`, { parse_mode: "HTML", reply_markup: backMenu });
+  if (data === "morning") await bot.sendMessage(chatId, formatMorningForecast(forecast), { parse_mode: "HTML", reply_markup: backMenu });
+  if (data === "night") await bot.sendMessage(chatId, formatNightFishing(forecast), { parse_mode: "HTML", reply_markup: backMenu });
   if (data === "bait") await bot.sendMessage(chatId, `🪱 <b>Рекомендована наживка</b>\n\n${forecast.bait.join(" / ")}`, { parse_mode: "HTML", reply_markup: backMenu });
   if (data === "ai") await bot.sendMessage(chatId, `🧠 <b>AI порада</b>\n\n${await getAiAdvice(weather, forecast)}`, { parse_mode: "HTML", reply_markup: backMenu });
   if (data === "notifications") await bot.sendMessage(chatId, "🔔 Сповіщення готові: ранковий прогноз 06:00, вечірній 18:00. Для постійного режиму запусти bot runtime.", { reply_markup: backMenu });
