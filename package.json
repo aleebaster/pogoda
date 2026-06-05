@@ -1,0 +1,43 @@
+{
+  "name": "pogoda",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "bot": "tsx bot/index.ts",
+    "api": "next dev",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "proof:weather": "tsx scripts/proof-weather.ts",
+    "proof:fishing": "tsx scripts/proof-fishing.ts",
+    "proof:ai": "tsx scripts/proof-ai.ts",
+    "proof:telegram": "tsx scripts/proof-telegram.ts"
+  },
+  "dependencies": {
+    "@vercel/analytics": "latest",
+    "cheerio": "latest",
+    "dotenv": "latest",
+    "next": "latest",
+    "node-cron": "latest",
+    "node-telegram-bot-api": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "latest",
+    "@types/node": "latest",
+    "@types/node-telegram-bot-api": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "eslint": "latest",
+    "eslint-config-next": "latest",
+    "tailwindcss": "latest",
+    "tsx": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}
