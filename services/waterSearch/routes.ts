@@ -19,7 +19,6 @@ export function spotsRouteKeyboard(spots: SpotRecommendation[], origin?: Coordin
   return {
     inline_keyboard: [
       ...spots.slice(0, 5).map((spot) => [{ text: `🗺 ${spot.name}`, url: googleMapsRouteUrl(spot, origin) }]),
-      [{ text: "🏠 Головне меню", callback_data: "home" }],
     ],
   };
 }

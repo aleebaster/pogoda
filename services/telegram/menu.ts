@@ -1,22 +1,52 @@
 import type TelegramBot from "node-telegram-bot-api";
 
-export const mainMenu: TelegramBot.InlineKeyboardMarkup = {
-  inline_keyboard: [
-    [{ text: "🎣 Кльов", callback_data: "bite" }, { text: "🌦 Погода", callback_data: "weather" }],
-    [{ text: "📍 Де ловити", callback_data: "spots" }, { text: "🐟 Яка риба активна", callback_data: "fish" }],
-    [{ text: "🗺 Маршрути", callback_data: "routes" }, { text: "🎣 ТОП місця сьогодні", callback_data: "top_spots" }],
-    [{ text: "🔥 Де зараз клює", callback_data: "hot" }, { text: "📊 Індекс кльову", callback_data: "bite_index" }],
-    [{ text: "🌙 Нічна рибалка", callback_data: "night" }, { text: "🌅 Ранковий прогноз", callback_data: "morning" }],
-    [{ text: "🪱 Наживка", callback_data: "bait" }, { text: "🗺 Локації", callback_data: "spots" }],
-    [{ text: "🧠 AI Помічник", callback_data: "ai" }, { text: "🔔 Сповіщення", callback_data: "notifications" }],
-    [{ text: "⚙️ Налаштування", callback_data: "settings" }, { text: "📍 Моя геолокація", callback_data: "location_help" }],
-    [{ text: "🏞 Калуський район", callback_data: "district_kalush" }, { text: "⭐ Обрані місця", callback_data: "favorites" }],
+export const menuActions = {
+  bite: "🎣 Кльов",
+  weather: "🌦 Погода",
+  spots: "📍 Де ловити",
+  fish: "🐟 Активна риба",
+  routes: "🗺 Маршрути",
+  hot: "🔥 Де клює зараз",
+  topSpots: "🏆 ТОП місця",
+  biteIndex: "📊 Індекс кльову",
+  night: "🌙 Нічна рибалка",
+  morning: "🌅 Ранковий прогноз",
+  bait: "🪱 Наживка",
+  location: "📍 Локація",
+  ai: "🧠 AI Помічник",
+  notifications: "🔔 Сповіщення",
+  settings: "⚙️ Налаштування",
+  favorites: "⭐ Обрані місця",
+  kalushDistrict: "🏞 Калуський район",
+} as const;
+
+export type MenuAction = keyof typeof menuActions;
+
+export const mainMenu: TelegramBot.ReplyKeyboardMarkup = {
+  keyboard: [
+    [button(menuActions.bite), button(menuActions.weather)],
+    [button(menuActions.spots), button(menuActions.fish)],
+    [button(menuActions.routes), button(menuActions.hot)],
+    [button(menuActions.topSpots), button(menuActions.biteIndex)],
+    [button(menuActions.night), button(menuActions.morning)],
+    [button(menuActions.bait), button(menuActions.location)],
+    [button(menuActions.ai), button(menuActions.notifications)],
+    [button(menuActions.settings), button(menuActions.favorites)],
+    [button(menuActions.kalushDistrict)],
   ],
+  resize_keyboard: true,
+  one_time_keyboard: false,
+  is_persistent: true,
 };
 
-export const backMenu: TelegramBot.InlineKeyboardMarkup = {
-  inline_keyboard: [[{ text: "🏠 Головне меню", callback_data: "home" }]],
-};
+function button(text: string): TelegramBot.KeyboardButton {
+  return { text };
+}
+
+export function getMenuAction(text: string): MenuAction | null {
+  const entry = Object.entries(menuActions).find(([, label]) => label === text.trim());
+  return entry ? entry[0] as MenuAction : null;
+}
 
 export function mainMenuText(): string {
   return [
@@ -24,6 +54,6 @@ export function mainMenuText(): string {
     "",
     "Розумний помічник для риболовлі по всій Україні: погода, кльов, водойми, маршрути.",
     "",
-    "Обери дію нижче або напиши місто/село текстом: Калуш, Брошнів, Войнилів, Долина, Івано-Франківськ...",
+    "Нижнє меню закріплене. Натискай плитки або напиши місто/село текстом: Калуш, Брошнів, Войнилів, Добрівляни...",
   ].join("\n");
 }

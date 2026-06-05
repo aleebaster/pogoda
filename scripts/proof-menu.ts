@@ -14,7 +14,7 @@ async function main() {
     }),
   });
   const json = await response.json();
-  console.log(JSON.stringify({ sent: response.ok, telegramResponse: json }, null, 2));
+  console.log(JSON.stringify({ sent: response.ok, replyMarkupSent: mainMenu, telegramResponse: json }, null, 2));
 }
 
 main().catch((error: unknown) => {
