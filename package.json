@@ -12,8 +12,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "proof:weather": "tsx scripts/proof-weather.ts",
+    "proof:weather:fallback": "tsx scripts/proof-weather-fallback.ts",
     "proof:fishing": "tsx scripts/proof-fishing.ts",
     "proof:ai": "tsx scripts/proof-ai.ts",
+    "proof:geolocation": "tsx scripts/proof-geolocation.ts",
     "proof:telegram": "tsx scripts/proof-telegram.ts"
   },
   "dependencies": {

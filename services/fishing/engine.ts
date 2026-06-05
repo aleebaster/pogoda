@@ -27,7 +27,7 @@ export function buildBiteForecast(weather: WeatherForecast): BiteForecast {
   const temp = (today.temperatureMin + today.temperatureMax) / 2;
   const reasons: string[] = [];
   const warnings: string[] = [];
-  let score = 45;
+  let score = 30;
 
   if (today.pressure >= 750 && today.pressure <= 762) {
     score += 20;
@@ -91,23 +91,23 @@ export function buildBiteForecast(weather: WeatherForecast): BiteForecast {
 function scoreFish(profile: FishProfile, weather: WeatherForecast, baseScore: number): FishActivity {
   const today = weather.current;
   const temp = (today.temperatureMin + today.temperatureMax) / 2;
-  let score = baseScore;
+  let score = baseScore - 25;
   const reasons: string[] = [];
 
   if (temp >= profile.idealTemp[0] && temp <= profile.idealTemp[1]) {
-    score += 16;
+    score += 11;
     reasons.push("температура підходить виду");
   } else {
     score -= Math.min(20, Math.abs(temp - (profile.idealTemp[0] + profile.idealTemp[1]) / 2));
   }
 
   if (profile.likesClouds && today.cloudiness > 50) {
-    score += 8;
+    score += 5;
     reasons.push("хмарність додає сміливості рибі");
   }
 
   if (today.rainProbability > profile.rainTolerance) score -= 12;
-  if (today.windSpeed <= 4) score += 6;
+  if (today.windSpeed <= 4) score += 4;
 
   return {
     fish: profile.fish,

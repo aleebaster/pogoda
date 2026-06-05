@@ -28,7 +28,7 @@ export function formatWeather(weather: WeatherForecast): string {
   return [
     "🌦 <b>Погода для риболовлі</b>",
     `📍 ${weather.location.label}`,
-    `Джерело: ${weather.source === "sinoptik" ? "Sinoptik" : "fallback cache"}`,
+    `Джерело: ${weather.source === "sinoptik" ? "Sinoptik" : weather.source === "open-meteo" ? "Open-Meteo GPS fallback" : "аварійний fallback"}`,
     "",
     ...weather.days.map((day) => [
       `${day.icon} <b>${day.dayLabel}</b> <i>${day.date}</i>`,

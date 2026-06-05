@@ -7,6 +7,7 @@ export const mainMenu: TelegramBot.InlineKeyboardMarkup = {
     [{ text: "🪱 Наживка", callback_data: "bait" }, { text: "🗺 Локації", callback_data: "spots" }],
     [{ text: "🧠 AI Помічник", callback_data: "ai" }, { text: "🔔 Сповіщення", callback_data: "notifications" }],
     [{ text: "⚙️ Налаштування", callback_data: "settings" }, { text: "📍 Моя геолокація", callback_data: "location_help" }],
+    [{ text: "🏞 Калуський район", callback_data: "district_kalush" }, { text: "⭐ Обрані місця", callback_data: "favorites" }],
   ],
 };
 
@@ -20,6 +21,6 @@ export function mainMenuText(): string {
     "",
     "Розумний помічник для риболовлі у Калуському районі та Івано-Франківській області.",
     "",
-    "Обери дію нижче:",
+    "Обери дію нижче або напиши місто/село текстом: Калуш, Брошнів, Войнилів, Долина, Івано-Франківськ...",
   ].join("\n");
 }

@@ -3,7 +3,7 @@ import TelegramBot from "node-telegram-bot-api";
 import { appConfig, defaultLocation } from "@/config/app";
 import { getAiAdvice } from "@/services/ai/assistant";
 import { buildBiteForecast } from "@/services/fishing/engine";
-import { resolveLocation } from "@/services/location/location";
+import { resolveDistrictLocation, resolveLocation, resolveManualLocation } from "@/services/location/location";
 import { startNotifications } from "@/services/notifications/scheduler";
 import { backMenu, mainMenu, mainMenuText } from "@/services/telegram/menu";
 import { formatBite, formatFishActivity, formatSpots, formatWeather } from "@/services/telegram/formatters";
@@ -16,6 +16,7 @@ if (!appConfig.telegramToken) {
 
 const bot = new TelegramBot(appConfig.telegramToken, { polling: true });
 const userLocations = new Map<number, ReturnType<typeof resolveLocation>>();
+const favoriteLocations = new Map<number, ReturnType<typeof resolveLocation>[]>();
 
 bot.onText(/\/start|\/menu/, async (message) => {
   await bot.sendMessage(message.chat.id, mainMenuText(), { parse_mode: "HTML", reply_markup: mainMenu });
@@ -25,7 +26,19 @@ bot.on("location", async (message) => {
   if (!message.location) return;
   const location = resolveLocation({ latitude: message.location.latitude, longitude: message.location.longitude, label: "Моя геолокація" });
   userLocations.set(message.chat.id, location);
+  saveFavorite(message.chat.id, location);
   await bot.sendMessage(message.chat.id, `📍 Геолокацію збережено: ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`, { reply_markup: mainMenu });
+});
+
+bot.on("message", async (message) => {
+  if (!message.text || message.text.startsWith("/") || message.location) return;
+  const chatId = message.chat.id;
+  const location = await resolveManualLocation(message.text);
+  userLocations.set(chatId, location);
+  saveFavorite(chatId, location);
+  const weather = await getWeatherForecast(location);
+  const forecast = buildBiteForecast(weather);
+  await bot.sendMessage(chatId, `📍 Локацію змінено: <b>${location.label}</b>\nДжерело погоди: ${weather.source === "sinoptik" ? "Sinoptik" : weather.source === "open-meteo" ? "Open-Meteo GPS" : "аварійний fallback"}\n\n${formatBite(weather, forecast)}`, { parse_mode: "HTML", reply_markup: mainMenu });
 });
 
 bot.on("callback_query", async (query) => {
@@ -41,7 +54,21 @@ bot.on("callback_query", async (query) => {
   }
 
   if (data === "location_help") {
-    await bot.sendMessage(chatId, "📍 Натисни скріпку в Telegram і надішли свою геолокацію. Після цього я покажу найближчі водойми та прогноз саме для тебе.", { reply_markup: backMenu });
+    await bot.sendMessage(chatId, "📍 Надішли GPS pin через Telegram або просто напиши місто/село текстом. Якщо Sinoptik не знайде населений пункт, я автоматично використаю Open-Meteo по координатах.", { reply_markup: backMenu });
+    return;
+  }
+
+  if (data === "district_kalush") {
+    const district = resolveDistrictLocation("Калуський район");
+    userLocations.set(chatId, district);
+    saveFavorite(chatId, district);
+    await bot.sendMessage(chatId, "🏞 Обрано Калуський район за замовчуванням.", { reply_markup: mainMenu });
+    return;
+  }
+
+  if (data === "favorites") {
+    const favorites = favoriteLocations.get(chatId) ?? [];
+    await bot.sendMessage(chatId, favorites.length ? `⭐ <b>Обрані місця</b>\n\n${favorites.map((item, index) => `${index + 1}. ${item.label} (${item.region})`).join("\n")}` : "⭐ Обраних місць ще немає. Надішли геолокацію або напиши місто/село.", { parse_mode: "HTML", reply_markup: backMenu });
     return;
   }
 
@@ -60,3 +87,9 @@ bot.on("callback_query", async (query) => {
 
 startNotifications(bot);
 console.log("Pogoda Telegram bot is running");
+
+function saveFavorite(chatId: number, location: ReturnType<typeof resolveLocation>): void {
+  const existing = favoriteLocations.get(chatId) ?? [];
+  const next = [location, ...existing.filter((item) => item.label !== location.label)].slice(0, 5);
+  favoriteLocations.set(chatId, next);
+}

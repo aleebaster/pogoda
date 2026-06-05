@@ -1,0 +1,98 @@
+import type { LocationInput } from "@/types/weather";
+
+type KnownLocation = Omit<LocationInput, "source"> & {
+  aliases: string[];
+};
+
+export const knownUkraineLocations: KnownLocation[] = [
+  {
+    label: "Калуш",
+    citySlug: "калуш",
+    region: "Івано-Франківська область",
+    district: "Калуський район",
+    latitude: 49.0119,
+    longitude: 24.3731,
+    aliases: ["калуш", "kalush"],
+  },
+  {
+    label: "Брошнів-Осада",
+    citySlug: "брошнів-осада",
+    region: "Івано-Франківська область",
+    district: "Калуський район",
+    latitude: 48.9969,
+    longitude: 24.1908,
+    aliases: ["брошнів", "брошнів-осада", "broshniv", "broshniv-osada"],
+  },
+  {
+    label: "Войнилів",
+    citySlug: "войнилів",
+    region: "Івано-Франківська область",
+    district: "Калуський район",
+    latitude: 49.1218,
+    longitude: 24.4902,
+    aliases: ["войнилів", "voinyliv", "voynyliv"],
+  },
+  {
+    label: "Долина",
+    citySlug: "долина",
+    region: "Івано-Франківська область",
+    district: "Калуський район",
+    latitude: 48.9733,
+    longitude: 24.0094,
+    aliases: ["долина", "dolyna"],
+  },
+  {
+    label: "Івано-Франківськ",
+    citySlug: "івано-франківськ",
+    region: "Івано-Франківська область",
+    district: "Івано-Франківський район",
+    latitude: 48.9226,
+    longitude: 24.7111,
+    aliases: ["івано-франківськ", "івано франківськ", "франківськ", "ivano-frankivsk", "frankivsk"],
+  },
+  {
+    label: "Київ",
+    citySlug: "київ",
+    region: "Київ",
+    district: "Київ",
+    latitude: 50.4501,
+    longitude: 30.5234,
+    aliases: ["київ", "киев", "kyiv", "kiev"],
+  },
+  {
+    label: "Львів",
+    citySlug: "львів",
+    region: "Львівська область",
+    district: "Львівський район",
+    latitude: 49.8397,
+    longitude: 24.0297,
+    aliases: ["львів", "львов", "lviv", "lvov"],
+  },
+  {
+    label: "Одеса",
+    citySlug: "одеса",
+    region: "Одеська область",
+    district: "Одеський район",
+    latitude: 46.4825,
+    longitude: 30.7233,
+    aliases: ["одеса", "одесса", "odesa", "odessa"],
+  },
+  {
+    label: "Харків",
+    citySlug: "харків",
+    region: "Харківська область",
+    district: "Харківський район",
+    latitude: 49.9935,
+    longitude: 36.2304,
+    aliases: ["харків", "харьков", "kharkiv", "kharkov"],
+  },
+  {
+    label: "Дніпро",
+    citySlug: "дніпро",
+    region: "Дніпропетровська область",
+    district: "Дніпровський район",
+    latitude: 48.4647,
+    longitude: 35.0462,
+    aliases: ["дніпро", "днепр", "dnipro", "dnepr"],
+  },
+];

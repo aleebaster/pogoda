@@ -8,6 +8,7 @@ export type LocationInput = Coordinates & {
   citySlug: string;
   region: string;
   district: string;
+  source: "default" | "telegram-gps" | "manual" | "district" | "favorite";
 };
 
 export type WeatherDay = {
@@ -28,7 +29,7 @@ export type WeatherDay = {
 };
 
 export type WeatherForecast = {
-  source: "sinoptik" | "fallback";
+  source: "sinoptik" | "open-meteo" | "fallback";
   location: LocationInput;
   generatedAt: string;
   current: WeatherDay;

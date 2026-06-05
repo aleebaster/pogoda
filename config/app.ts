@@ -8,6 +8,7 @@ export const defaultLocation: LocationInput = {
   district: "Калуський район",
   latitude: 49.0119,
   longitude: 24.3731,
+  source: "default",
 };
 
 export const appConfig = {
