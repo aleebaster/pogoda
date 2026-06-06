@@ -6,7 +6,7 @@ export const menuActions = {
   spots: "📍 Де ловити",
   fish: "🐟 Активна риба",
   routes: "🗺 Маршрути",
-  hot: "🔥 Де клює зараз",
+  hot: "🔥 Де зараз клює",
   topSpots: "🏆 ТОП місця",
   biteIndex: "📊 Індекс кльову",
   night: "🌙 Нічна рибалка",
@@ -44,7 +44,15 @@ function button(text: string): TelegramBot.KeyboardButton {
 }
 
 export function getMenuAction(text: string): MenuAction | null {
-  const entry = Object.entries(menuActions).find(([, label]) => label === text.trim());
+  const value = text.trim();
+  const aliases: Record<string, MenuAction> = {
+    "🔥 Де клює зараз": "hot",
+    "🎣 ТОП місця сьогодні": "topSpots",
+    "🐟 Яка риба активна": "fish",
+    "📍 Моя геолокація": "location",
+  };
+  if (aliases[value]) return aliases[value];
+  const entry = Object.entries(menuActions).find(([, label]) => label === value);
   return entry ? entry[0] as MenuAction : null;
 }
 
