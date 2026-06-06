@@ -19,11 +19,21 @@ const bot = new TelegramBot(appConfig.telegramToken, { polling: true });
 const userLocations = new Map<number, ReturnType<typeof resolveLocation>>();
 const favoriteLocations = new Map<number, ReturnType<typeof resolveLocation>[]>();
 
+bot.on("polling_error", (error) => {
+  console.error("[telegram:polling_error]", error.message);
+});
+
+bot.on("webhook_error", (error) => {
+  console.error("[telegram:webhook_error]", error.message);
+});
+
 bot.onText(/\/start|\/menu/, async (message) => {
+  logIncoming(message, "command");
   await bot.sendMessage(message.chat.id, mainMenuText(), { parse_mode: "HTML", reply_markup: mainMenu });
 });
 
 bot.on("location", async (message) => {
+  logIncoming(message, "location");
   if (!message.location) return;
   const location = resolveLocation({ latitude: message.location.latitude, longitude: message.location.longitude, label: "Моя геолокація" });
   userLocations.set(message.chat.id, location);
@@ -32,21 +42,28 @@ bot.on("location", async (message) => {
 });
 
 bot.on("message", async (message) => {
-  if (!message.text || message.text.startsWith("/") || message.location) return;
-  const chatId = message.chat.id;
-  const menuAction = getMenuAction(message.text);
-  if (menuAction) {
-    await handleMenuAction(chatId, menuAction);
-    return;
-  }
+  logIncoming(message, "message");
+  try {
+    if (!message.text || message.text.startsWith("/") || message.location) return;
+    const chatId = message.chat.id;
+    const menuAction = getMenuAction(message.text);
+    console.log("[telegram:route]", JSON.stringify({ text: message.text, action: menuAction ?? "manual-location" }));
+    if (menuAction) {
+      await handleMenuAction(chatId, menuAction);
+      return;
+    }
 
-  const location = await resolveManualLocation(message.text);
-  userLocations.set(chatId, location);
-  saveFavorite(chatId, location);
-  const weather = await getWeatherForecast(location);
-  const forecast = buildBiteForecast(weather);
-  const spots = recommendSpots(location, forecast);
-  await bot.sendMessage(chatId, formatLocationOverview(weather, forecast, spots), { parse_mode: "HTML", reply_markup: spotsRouteKeyboard(spots, location) });
+    const location = await resolveManualLocation(message.text);
+    userLocations.set(chatId, location);
+    saveFavorite(chatId, location);
+    const weather = await getWeatherForecast(location);
+    const forecast = buildBiteForecast(weather);
+    const spots = recommendSpots(location, forecast);
+    await bot.sendMessage(chatId, formatLocationOverview(weather, forecast, spots), { parse_mode: "HTML", reply_markup: spotsRouteKeyboard(spots, location) });
+  } catch (error) {
+    console.error("[telegram:message_error]", error);
+    await bot.sendMessage(message.chat.id, "⚠️ Виникла помилка обробки. Меню активне, спробуй ще раз або натисни /menu.", { reply_markup: mainMenu });
+  }
 });
 
 bot.on("callback_query", async (query) => {
@@ -65,6 +82,7 @@ bot.on("callback_query", async (query) => {
 });
 
 async function handleMenuAction(chatId: number, action: MenuAction): Promise<void> {
+  console.log("[telegram:handle_action]", JSON.stringify({ chatId, action }));
   const location = userLocations.get(chatId) ?? defaultLocation;
 
   if (action === "location") {
@@ -106,6 +124,16 @@ async function handleMenuAction(chatId: number, action: MenuAction): Promise<voi
 
 startNotifications(bot);
 console.log("Pogoda Telegram bot is running");
+
+function logIncoming(message: TelegramBot.Message, event: string): void {
+  console.log("[telegram:incoming]", JSON.stringify({
+    event,
+    chatId: message.chat.id,
+    messageId: message.message_id,
+    text: message.text ?? null,
+    location: message.location ? { latitude: message.location.latitude, longitude: message.location.longitude } : null,
+  }));
+}
 
 function saveFavorite(chatId: number, location: ReturnType<typeof resolveLocation>): void {
   const existing = favoriteLocations.get(chatId) ?? [];
