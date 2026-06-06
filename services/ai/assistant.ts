@@ -12,6 +12,7 @@ export async function getAiAdvice(weather: WeatherForecast, forecast: BiteForeca
 }
 
 async function askLmStudio(prompt: string): Promise<string | null> {
+  if (!appConfig.useLocalAi || !appConfig.lmStudioUrl) return null;
   try {
     const response = await fetch(`${appConfig.lmStudioUrl.replace(/\/$/, "")}/v1/chat/completions`, {
       method: "POST",

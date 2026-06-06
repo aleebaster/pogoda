@@ -1,0 +1,8 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "node node_modules/next/dist/bin/next build",
+  "installCommand": "npm ci",
+  "env": {
+    "LM_STUDIO_URL": ""
+  }
+}

@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 const cacheDir = join(process.cwd(), ".cache");
+const memoryCache = new Map<string, CacheEnvelope<unknown>>();
 
 type CacheEnvelope<T> = {
   expiresAt: number;
@@ -9,6 +10,9 @@ type CacheEnvelope<T> = {
 };
 
 export async function getCached<T>(key: string): Promise<T | null> {
+  const memory = memoryCache.get(key) as CacheEnvelope<T> | undefined;
+  if (memory && Date.now() <= memory.expiresAt) return memory.value;
+
   try {
     const raw = await readFile(cachePath(key), "utf8");
     const envelope = JSON.parse(raw) as CacheEnvelope<T>;
@@ -20,8 +24,14 @@ export async function getCached<T>(key: string): Promise<T | null> {
 }
 
 export async function setCached<T>(key: string, value: T, ttlMs: number): Promise<void> {
-  await mkdir(cacheDir, { recursive: true });
-  await writeFile(cachePath(key), JSON.stringify({ expiresAt: Date.now() + ttlMs, value }, null, 2), "utf8");
+  const envelope = { expiresAt: Date.now() + ttlMs, value };
+  memoryCache.set(key, envelope);
+  try {
+    await mkdir(cacheDir, { recursive: true });
+    await writeFile(cachePath(key), JSON.stringify(envelope, null, 2), "utf8");
+  } catch {
+    // Vercel/serverless runtimes may not allow persistent filesystem writes.
+  }
 }
 
 export async function cached<T>(key: string, ttlMs: number, loader: () => Promise<T>): Promise<T> {

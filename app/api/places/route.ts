@@ -5,6 +5,9 @@ import { resolveLocation, resolveManualLocation } from "@/services/location/loca
 import { getWeatherForecast } from "@/services/weather/sinoptik";
 import { recommendSpots } from "@/services/waterSearch/waterSearch";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const latitude = Number(url.searchParams.get("lat"));
