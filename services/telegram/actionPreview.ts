@@ -15,7 +15,7 @@ export type ActionPreview = {
 };
 
 export async function buildActionPreview(action: MenuAction): Promise<ActionPreview> {
-  if (action === "location") return html("📍 Надішли GPS pin через Telegram або просто напиши місто/село текстом. Погода працює через Sinoptik, а якщо населений пункт не знайдено - через Open-Meteo GPS.");
+  if (action === "location") return html("📡 <b>Геолокація</b>\n\nНадішли GPS pin через Telegram. Я знайду найближчі водойми, покажу кльов, відстань і маршрут Google Maps.");
   if (action === "kalushDistrict") return html("🏞 <b>Калуський район</b>\n\nОбрано базовий регіон: Калуш, Лімниця, Добрівляни, Войнилів, Долина та найближчі водойми.");
   if (action === "favorites") return html("⭐ <b>Обрані місця</b>\n\nПоки список порожній. Надішли геолокацію або напиши місто/село, і я додам його в обрані у runtime.");
 

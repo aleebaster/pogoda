@@ -2,17 +2,17 @@ import type TelegramBot from "node-telegram-bot-api";
 
 export const menuActions = {
   bite: "🎣 Кльов",
-  weather: "🌦 Погода",
+  weather: "🌤 Погода",
   spots: "📍 Де ловити",
   fish: "🐟 Активна риба",
-  routes: "🗺 Маршрути",
+  routes: "🗺 Маршрут",
   hot: "🔥 Де зараз клює",
-  topSpots: "🏆 ТОП місця",
+  topSpots: "🔥 ТОП місця",
   biteIndex: "📊 Індекс кльову",
   night: "🌙 Нічна рибалка",
   morning: "🌅 Ранковий прогноз",
   bait: "🪱 Наживка",
-  location: "📍 Локація",
+  location: "📡 Геолокація",
   ai: "🧠 AI Помічник",
   notifications: "🔔 Сповіщення",
   settings: "⚙️ Налаштування",
@@ -47,8 +47,12 @@ export function getMenuAction(text: string): MenuAction | null {
   const value = text.trim();
   const aliases: Record<string, MenuAction> = {
     "🔥 Де клює зараз": "hot",
+    "🌦 Погода": "weather",
+    "🗺 Маршрути": "routes",
     "🎣 ТОП місця сьогодні": "topSpots",
+    "🏆 ТОП місця": "topSpots",
     "🐟 Яка риба активна": "fish",
+    "📍 Локація": "location",
     "📍 Моя геолокація": "location",
   };
   if (aliases[value]) return aliases[value];

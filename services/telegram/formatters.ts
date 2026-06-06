@@ -104,6 +104,28 @@ export function formatLocationOverview(weather: WeatherForecast, forecast: BiteF
   ].join("\n");
 }
 
+export function formatWaterPreview(weather: WeatherForecast, forecast: BiteForecast, spot: SpotRecommendation): string {
+  return [
+    `📍 <b>${spot.name}</b>`,
+    "━━━━━━━━━━━━━━",
+    `🗺 <b>Локація:</b> ${spot.district}, ${spot.region}`,
+    `🎣 <b>Яка риба водиться:</b> ${spot.species.join(", ")}`,
+    `🔥 <b>Індекс кльову:</b> ${spot.todayScore}% (${forecast.label})`,
+    `🌤 <b>Погода зараз:</b> ${weather.current.summary}`,
+    `💨 <b>Вітер:</b> ${weather.current.windSpeed} м/с ${weather.current.windDirection}`,
+    `🌡 <b>Температура:</b> ${weather.current.temperatureMin}..${weather.current.temperatureMax}°C`,
+    `🧭 <b>Тиск:</b> ${weather.current.pressure} мм`,
+    `🪱 <b>Наживка:</b> ${forecast.bait.slice(0, 4).join(" / ")}`,
+    `⏰ <b>Найкращий час:</b> ${spot.bestTime || forecast.bestTime}`,
+    "",
+    `🚗 <b>Як доїхати:</b> ${spot.accessibility}`,
+    `📏 <b>Відстань:</b> ${spot.distanceKm} км`,
+    `🌿 <b>Сезонність:</b> ${spot.seasonality}`,
+    "",
+    spot.notes,
+  ].join("\n");
+}
+
 export function formatMorningForecast(forecast: BiteForecast): string {
   return [`🌅 <b>Ранковий прогноз</b>`, "━━━━━━━━━━━━━━", `${forecast.emoji} Кльов ${forecast.score}%`, `🕒 ${forecast.bestTime}`, `🐟 ${forecast.fish.slice(0, 3).map((fish) => fish.fish).join(", ")}`, `🪱 ${forecast.bait.join(" / ")}`].join("\n");
 }

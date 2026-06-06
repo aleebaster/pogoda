@@ -6,10 +6,10 @@ import { buildBiteForecast } from "@/services/fishing/engine";
 import { resolveDistrictLocation, resolveLocation, resolveManualLocation } from "@/services/location/location";
 import { startNotifications } from "@/services/notifications/scheduler";
 import { getMenuAction, mainMenu, mainMenuText, type MenuAction } from "@/services/telegram/menu";
-import { formatBite, formatFishActivity, formatLocationOverview, formatMorningForecast, formatNightFishing, formatSpots, formatWeather } from "@/services/telegram/formatters";
+import { formatBite, formatFishActivity, formatLocationOverview, formatMorningForecast, formatNightFishing, formatSpots, formatWaterPreview, formatWeather } from "@/services/telegram/formatters";
 import { getWeatherForecast } from "@/services/weather/sinoptik";
 import { recommendSpots } from "@/services/waterSearch/waterSearch";
-import { spotsRouteKeyboard } from "@/services/waterSearch/routes";
+import { estimateDriveMinutes, spotRouteKeyboard, spotsRouteKeyboard } from "@/services/waterSearch/routes";
 
 if (!appConfig.telegramToken) {
   throw new Error("TELEGRAM_BOT_TOKEN is required");
@@ -34,11 +34,19 @@ bot.onText(/\/start|\/menu/, async (message) => {
 
 bot.on("location", async (message) => {
   logIncoming(message, "location");
-  if (!message.location) return;
-  const location = resolveLocation({ latitude: message.location.latitude, longitude: message.location.longitude, label: "Моя геолокація" });
-  userLocations.set(message.chat.id, location);
-  saveFavorite(message.chat.id, location);
-  await bot.sendMessage(message.chat.id, `📍 Геолокацію збережено: ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`, { reply_markup: mainMenu });
+  try {
+    if (!message.location) return;
+    const location = resolveLocation({ latitude: message.location.latitude, longitude: message.location.longitude, label: "Моя геолокація" });
+    userLocations.set(message.chat.id, location);
+    saveFavorite(message.chat.id, location);
+    const weather = await getWeatherForecast(location);
+    const forecast = buildBiteForecast(weather);
+    const spots = recommendSpots(location, forecast).sort((a, b) => a.distanceKm - b.distanceKm);
+    await bot.sendMessage(message.chat.id, `📡 <b>Геолокацію отримано</b>\n${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}\n\n${formatLocationOverview(weather, forecast, spots)}`, { parse_mode: "HTML", reply_markup: spotsRouteKeyboard(spots, location) });
+  } catch (error) {
+    console.error("[telegram:location_error]", error);
+    await bot.sendMessage(message.chat.id, "⚠️ Не зміг обробити геолокацію. Спробуй ще раз або напиши населений пункт текстом.", { reply_markup: mainMenu });
+  }
 });
 
 bot.on("message", async (message) => {
@@ -59,6 +67,7 @@ bot.on("message", async (message) => {
     const weather = await getWeatherForecast(location);
     const forecast = buildBiteForecast(weather);
     const spots = recommendSpots(location, forecast);
+    await bot.sendMessage(chatId, formatWaterPreview(weather, forecast, spots[0]), { parse_mode: "HTML", reply_markup: spotRouteKeyboard(spots[0], location) });
     await bot.sendMessage(chatId, formatLocationOverview(weather, forecast, spots), { parse_mode: "HTML", reply_markup: spotsRouteKeyboard(spots, location) });
   } catch (error) {
     console.error("[telegram:message_error]", error);
@@ -77,6 +86,18 @@ bot.on("callback_query", async (query) => {
     return;
   }
 
+  if (data.startsWith("route_info:")) {
+    const spotId = data.slice("route_info:".length);
+    const location = userLocations.get(chatId) ?? defaultLocation;
+    const weather = await getWeatherForecast(location);
+    const forecast = buildBiteForecast(weather);
+    const spot = recommendSpots(location, forecast).find((item) => item.id === spotId);
+    if (spot) {
+      await bot.sendMessage(chatId, `🚗 <b>Маршрут</b>\n${spot.name}\n\n📏 Відстань: ${spot.distanceKm} км\n⏱ Орієнтовний час: ${estimateDriveMinutes(spot.distanceKm)} хв\n🛣 Натисни Google Maps або OSM у повідомленні з маршрутом.`, { parse_mode: "HTML", reply_markup: mainMenu });
+    }
+    return;
+  }
+
   const legacyAction = legacyCallbackToAction(data);
   if (legacyAction) await handleMenuAction(chatId, legacyAction);
 });
@@ -86,7 +107,7 @@ async function handleMenuAction(chatId: number, action: MenuAction): Promise<voi
   const location = userLocations.get(chatId) ?? defaultLocation;
 
   if (action === "location") {
-    await bot.sendMessage(chatId, "📍 Надішли GPS pin через Telegram або просто напиши місто/село текстом. Якщо Sinoptik не знайде населений пункт, я автоматично використаю Open-Meteo по координатах.", { reply_markup: mainMenu });
+    await bot.sendMessage(chatId, "📡 <b>Геолокація</b>\n\nНадішли GPS pin через Telegram. Я автоматично знайду найближчі водойми, відсортую їх по відстані й побудую маршрут. Також можна написати місто/село: Калуш, Добрівляни, Войнилів, Брошнів, Долина, Івано-Франківськ.", { parse_mode: "HTML", reply_markup: mainMenu });
     return;
   }
 
@@ -111,7 +132,7 @@ async function handleMenuAction(chatId: number, action: MenuAction): Promise<voi
   if (action === "bite") await bot.sendMessage(chatId, formatBite(weather, forecast), { parse_mode: "HTML", reply_markup: mainMenu });
   if (action === "weather") await bot.sendMessage(chatId, formatWeather(weather), { parse_mode: "HTML", reply_markup: mainMenu });
   if (action === "spots" || action === "topSpots" || action === "hot") await bot.sendMessage(chatId, formatSpots(spots), { parse_mode: "HTML", reply_markup: spotsRouteKeyboard(spots, location) });
-  if (action === "routes") await bot.sendMessage(chatId, "🗺 <b>Маршрути до рибних місць</b>\n\nОбери водойму нижче, відкриється Google Maps маршрут. Нижнє меню залишається закріпленим.", { parse_mode: "HTML", reply_markup: spotsRouteKeyboard(spots, location) });
+  if (action === "routes") await bot.sendMessage(chatId, "🗺 <b>Маршрути до рибних місць</b>\n\nОбери водойму нижче. Google Maps побудує маршрут origin → destination, якщо ти вже надсилав геолокацію або обрав населений пункт.", { parse_mode: "HTML", reply_markup: spotsRouteKeyboard(spots, location) });
   if (action === "fish") await bot.sendMessage(chatId, formatFishActivity(forecast), { parse_mode: "HTML", reply_markup: mainMenu });
   if (action === "biteIndex") await bot.sendMessage(chatId, `📊 <b>Індекс кльову</b>\n━━━━━━━━━━━━━━\n${forecast.emoji} ${forecast.score}% - ${forecast.label}\n${forecast.shouldGo ? "✅ Варто їхати" : "🔴 Краще зачекати"}\n\nТоп риба: ${forecast.fish.slice(0, 4).map((fish) => `${fish.fish} ${fish.score}%`).join(" • ")}`, { parse_mode: "HTML", reply_markup: mainMenu });
   if (action === "morning") await bot.sendMessage(chatId, formatMorningForecast(forecast), { parse_mode: "HTML", reply_markup: mainMenu });
